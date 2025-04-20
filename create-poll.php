@@ -42,12 +42,15 @@ class create_poll
 					NopenDate DATE, 
 					NcloseDate DATE, 
 					NMinPoints INT NOT NULL,
+					Nothers CHAR NOT NULL,
+					Notherscount INT NOT NULL,
 					PopenDate DATE,
 					PcloseDate DATE, 
 					PMinPoints INT NOT NULL,
 					Pselection CHAR NOT NULL,
 					Ppoints INT NOT NULL,
-					VotesDisplay CHAR NOT NULL
+					VotesDisplay CHAR NOT NULL,
+					Listing CHAR NOT NULL
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;';
         }
 		if (!in_array(qa_db_add_table_prefix('pnomination'), $tablesexisting)) {
@@ -56,6 +59,7 @@ class create_poll
                     id INT AUTO_INCREMENT PRIMARY KEY,
 					pid INT NOT NULL,
 					uid INT NOT NULL,
+					nid INT NOT NULL,
 					uname VARCHAR(300) NOT NULL,
 					nomination CHAR NOT NULL					
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;';
@@ -102,6 +106,8 @@ class create_poll
 			$nopen = qa_post_text('nopen');
 			$nclose = qa_post_text('nclose');
 			$nminpoints = (int) qa_post_text('nminpoints');
+			$nothers = qa_post_text('Nothers');
+			$notherscount = (int) qa_post_text('Notherscount');			
 			$popen = qa_post_text('popen');
 			$pclose = qa_post_text('pclose');
 			$pminpoints = (int) qa_post_text('pminpoints');
@@ -110,14 +116,14 @@ class create_poll
 			$votesdisplay = qa_post_text('votesdisplay');
 
             if($nomination=='y'){
-            qa_db_query_sub(
-                'INSERT INTO ^poll(Heading, Description, Nomination, NopenDate, NcloseDate, NMinPoints, PopenDate, PcloseDate, PMinPoints, Pselection, Ppoints, VotesDisplay) VALUES ($, $, $, $, $, #, $, $, #, $, #, $)',$heading, $description, $nomination,$nopen, $nclose, $nminpoints,$popen, $pclose, $pminpoints,$pselection, $ppoints, $votesdisplay
-            );
+				qa_db_query_sub(
+                'INSERT INTO ^poll(Heading, Description, Nomination, NopenDate, NcloseDate, NMinPoints, Nothers, Notherscount,PopenDate, PcloseDate, PMinPoints, Pselection, Ppoints, VotesDisplay,Listing) VALUES ($, $, $, $, $, #,$,#, $, $, #, $, #, $,$)',$heading, $description, $nomination,$nopen, $nclose, $nminpoints,$nothers, $notherscount,$popen, $pclose, $pminpoints,$pselection, $ppoints, $votesdisplay,'y'
+				);
 			}
 			else
 			{
 				qa_db_query_sub(
-                'INSERT INTO ^poll(Heading, Description, Nomination, NopenDate, NcloseDate, NMinPoints, PopenDate, PcloseDate, PMinPoints, Pselection, Ppoints, VotesDisplay) VALUES ($, $, $, $, $, #, $, $, #, $, #, $)',$heading, $description, $nomination,$nopen, $nclose, $nminpoints,$popen, $pclose, $pminpoints,$pselection, $ppoints, $votesdisplay
+                'INSERT INTO ^poll(Heading, Description, Nomination, NopenDate, NcloseDate, NMinPoints, Nothers, Notherscount,PopenDate, PcloseDate, PMinPoints, Pselection, Ppoints, VotesDisplay,Listing) VALUES ($, $, $, $, $, #,$,#, $, $, #, $, #, $,$)',$heading, $description, $nomination,$nopen, $nclose, $nminpoints,$nothers, $notherscount,$popen, $pclose, $pminpoints,$pselection, $ppoints, $votesdisplay,'y'
 				);				
 				$pollid = qa_db_last_insert_id();
 				$unames = qa_post_text('Noptions');
@@ -126,8 +132,8 @@ class create_poll
 				foreach ($unameArray as $uname) {
 					if (!empty($uname)) {
 						qa_db_query_sub(
-							'INSERT INTO ^pnomination (pid, uid, uname, nomination) VALUES (#, #, $, $)',
-							$pollid, $userid, $uname, 's'
+							'INSERT INTO ^pnomination (pid, uid, nid, uname, nomination) VALUES (#, #, $, $)',
+							$pollid, $userid, $userid,$uname, 's'
 						);
 						$userid++;
 					}
@@ -145,8 +151,11 @@ class create_poll
         <label><input type="radio" name="nomination" value="n">NO</label>', 'tags' => 'NAME="nomination" id="NOMIN"'],
             ['label' => 'Nomination Open Date', 'type' => 'date', 'tags' => 'NAME="nopen" id="NOP"','value' => $today],
             ['label' => 'Nomination Close Date', 'type' => 'date', 'tags' => 'NAME="nclose" id="NOC"', 'value' => $today],
-			['label' => 'Options for users (separated by commas)', 'type' => 'text', 'tags' => 'NAME="Noptions" id="Noptions"'],
-            ['label' => 'Minimum Points for Nominations', 'type' => 'number', 'tags' => 'NAME="nminpoints"', 'value' =>100],
+			['label' => 'Options for users (separated by commas)', 'type' => 'text', 'tags' => 'NAME="Noptions" id="Noptions" '],
+            ['label' => 'Minimum Points for Nominations', 'type' => 'number', 'tags' => 'NAME="nminpoints" id="NMP"', 'value' =>100],
+			['label' => 'Allow users to nominate other users?', 'type' => 'custom','html' => '<label><input type="radio" name="Nothers" value="y"> Yes</label>
+        <label><input type="radio" name="Nothers" value="n" checked>NO</label>', 'tags' => 'NAME="Nothers"'],
+		            ['label' => 'Maximum other nominations by a user ', 'type' => 'number', 'tags' => 'NAME="Notherscount"',  'value' =>1],
             ['label' => 'Polling Open Date', 'type' => 'date', 'tags' => 'NAME="popen"', 'value' => date('Y-m-d', strtotime($today . ' +1 day'))],
             ['label' => 'Polling Close Date', 'type' => 'date', 'tags' => 'NAME="pclose"','value' => date('Y-m-d', strtotime($today . ' +2 day'))],
             ['label' => 'Minimum Points for Casting Votes', 'type' => 'number', 'tags' => 'NAME="pminpoints"', 'value' =>100],
@@ -168,58 +177,95 @@ class create_poll
 
         if ($saved) {
             $content['form']['ok'] = 'Poll Created successfully!';
+			qa_redirect('list-polls', ['created' => '1']);
         }
    $content['script'][] = '
         <script>
-            document.addEventListener("DOMContentLoaded", function () {
-                const nominationRadios = document.querySelectorAll("input[name=\'nomination\']");
-                const nopField = document.getElementById("NOP");
-                const nocField = document.getElementById("NOC");
-				const optionsField = document.getElementById("Noptions");
+		document.addEventListener("DOMContentLoaded", function () {
 
-            function getRow(field) {
-                let el = field;
-                while (el && el.tagName !== "TR") {
-                    el = el.parentElement;
-                }
-                return el;
-            }
+			function getFieldByName(name) {
+				return document.querySelector(\'[name="\' + name + \'"]\');
+			}
 
-            function showField(field) {
-                const row = getRow(field);
-                if (row) row.style.display = "table-row";
-            }
+			function getRow(field) {
+				let el = field;
+				while (el && el.tagName !== "TR") {
+					el = el.parentElement;
+				}
+				return el;
+			}
 
-            function hideField(field) {
-                const row = getRow(field);
-                if (row) row.style.display = "none";
-            }
+			function showField(field) {
+				const row = getRow(field);
+				if (row) row.style.display = "table-row";
+			}
 
-            function toggleFields() {
-                const selected = document.querySelector("input[name=\'nomination\']:checked");
-                if (!selected) return;
+			function hideField(field) {
+				const row = getRow(field);
+				if (row) row.style.display = "none";
+			}
 
-                if (selected.value === "y") {
-                    showField(nopField);
-                    showField(nocField);
-					hideField(optionsField);
-					optionsField.value="";
-                } else if (selected.value === "n") {
-                    hideField(nopField);
-					nopField.value=new Date().toISOString().split("T")[0];
-					hideField(nocField);
-					nocField.value=new Date().toISOString().split("T")[0];
-                    showField(optionsField);
-                }
-            }
-                // Initial state
-                toggleFields();
+			function toggleFields(radioName, selectedValue) {
+				const config = fieldMap[radioName]?.[selectedValue];
+				if (!config) return;
 
-                // On change
-                nominationRadios.forEach(radio => {
-                    radio.addEventListener("change", toggleFields);
-                });
-            });
+				// Hide fields
+				(config.hide || []).forEach(name => {
+					const field = getFieldByName(name);
+					if (field) hideField(field);
+				});
+
+				// Show fields
+				(config.show || []).forEach(name => {
+					const field = getFieldByName(name);
+					if (field) showField(field);
+				});
+			}
+
+			// Define field toggle behavior per radio group and value
+			const fieldMap = {
+				nomination: {
+					y: {
+						show: ["nopen", "nclose", "nminpoints","Nothers"],
+						hide: ["Noptions"]
+					},
+					n: {
+						show: ["Noptions"],
+						hide: ["nopen", "nclose", "nminpoints","Nothers"]
+					}
+				},
+				
+				Nothers: {
+					y: {
+						show: ["Notherscount"]
+					},
+					n: {
+						hide: ["Notherscount"]
+					}
+				}
+			};
+
+			// Attach event listeners for all radio groups defined in fieldMap
+			Object.keys(fieldMap).forEach(radioGroupName => {
+				const radios = document.querySelectorAll(\'input[name="\' + radioGroupName + \'"]\');
+				radios.forEach((radio, index) => {
+					radio.addEventListener("change", () => {
+						if (radio.checked) {
+							toggleFields(radioGroupName, radio.value);
+						}
+					});
+				});
+			});
+			
+			// Initial call to toggleFields for each radio group
+			Object.keys(fieldMap).forEach(radioGroupName => {
+				const selected = document.querySelector(\'input[name="\' + radioGroupName + \'"]:checked\');
+				if (selected) {
+					toggleFields(radioGroupName, selected.value);
+				}
+			});
+
+		});
         </script>
     ';
 

@@ -39,10 +39,16 @@ class poll_stats
 			$content['error'] = "No such Poll exist. Please <a href='" .qa_path_html("list-polls")."'> click here </a> to know the polls";
             return $content;
 		}
+		$allowed_user=((qa_get_logged_in_level()<QA_USER_LEVEL_ADMIN)?0:1);
+		if((!$allowed_user)&& ($poll['Listing']=='n'))
+		{
+			$content['error'] = "No such poll available. Please <a href='" .qa_path_html("list-polls")."'> click here </a> to know the available polls for nomination.";
+            return $content;
+		}
 		$polltype=($poll['Pselection']=='s')?0:1;
-		$nominations=qa_db_read_all_assoc(qa_db_query_sub('SELECT * FROM ^pnomination where pid=# and nomination=$',$pollid,'s'));
+		$nominations=qa_db_read_all_assoc(qa_db_query_sub('SELECT distinct nid, uname FROM ^pnomination where pid=# and nomination=$',$pollid,'y'));
 		
-		$nominationcount=qa_db_read_all_assoc(qa_db_query_sub('SELECT count(*) as count FROM ^pnomination where pid=# and nomination=$',$pollid,'s'));
+		$nominationcount=qa_db_read_all_assoc(qa_db_query_sub('SELECT  count(distinct nid) as count FROM ^pnomination where pid=# and nomination=$',$pollid,'y'));
 		
 		$castings=qa_db_read_all_assoc(qa_db_query_sub('SELECT nid, sum(points) as votes FROM ^pcasting where pid=# group by nid',$pollid));
 		
@@ -50,17 +56,17 @@ class poll_stats
 
 		$n=0;
 
-
-		$content['custom'] = '<div><p>Description of the poll: '.$poll['Description'].'</p><p>Opening Date of Poll: '.$poll['PopenDate'].'</p><p>Closing Date of Poll: '.$poll['PcloseDate'].'</p><p>Polling type: '.(($polltype==0)?'Single Selection':'Multi Selection (use ctrl)').'</p><p>Total Nominations Received: '.$nominationcount[0]['count'].'</p><p>Total Users Voted: '.$castingscount[0]['count'].'</p></div>';
-
 		$pollnomination=$poll['Nomination'];
+		$content['custom'] = '<div><p>Description of the poll: '.$poll['Description'].'</p><p>Opening Date of Poll: '.$poll['PopenDate'].'</p><p>Closing Date of Poll: '.$poll['PcloseDate'].'</p><p>Polling type: '.(($polltype==0)?'Single Selection':'Multi Selection (use ctrl)').'</p><p>'.(($pollnomination=='y')?"Total Nominations Received: ":"Total options provided to users: ")." ".$nominationcount[0]['count'].'</p><p>Total Users Voted: '.$castingscount[0]['count'].'</p></div>';
+
+		
 
 		$html = "<hr><div id='nomination-stats'><h1>".		
 		(($pollnomination=='y')?"Nominations Summary:":"Options provided to users:")."</h1><table style='border:1px solid red;'><tr>".(($pollnomination=='y')?"<th>User ID</th><th>Name</th>":"<th>Option</th>")."</tr>";
 
 		foreach ($nominations as $nomination) {
 			if($pollnomination=='y'){
-				$html .= "<tr><td>".qa_userid_to_handle((int)($nomination['uid']))."</td><td>".$nomination['uname']."</td></tr>";
+				$html .= "<tr><td>".qa_userid_to_handle((int)($nomination['nid']))."</td><td>".$nomination['uname']."</td></tr>";
 			}
 			else
 				$html .= "<td>".$nomination['uname']."</td></tr>";

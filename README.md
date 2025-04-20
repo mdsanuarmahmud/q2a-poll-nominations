@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+# q2a-poll-nomination
+New poll plugin
+=======
 # Q2A Poll Plugin
 
 🗳️ A plugin inspired by the Indian Election System, built for [Question2Answer (Q2A)](https://www.question2answer.org/) platform.
@@ -24,3 +28,4 @@ Pages in the Plugin:
 4. casting - To cast vote in the poll. URL: casting&poll=
 5. list-polls - To list the available and completed polls
 6. poll-stats - To show the stats of a poll
+>>>>>>> a3814a1 (Initial commit)

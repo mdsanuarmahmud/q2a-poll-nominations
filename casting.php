@@ -37,6 +37,12 @@ class casting
 			$content['error'] = "There is no such poll available. Please <a href='" .qa_path_html("list-polls")."'> click here </a> to know the available polls for nomination.";
             return $content;
 		}
+		$allowed_user=((qa_get_logged_in_level()<QA_USER_LEVEL_ADMIN)?0:1);
+		if((!$allowed_user)&& ($poll['Listing']=='n'))
+		{
+			$content['error'] = "There is no such poll available. Please <a href='" .qa_path_html("list-polls")."'> click here </a> to know the available polls for nomination.";
+            return $content;
+		}
 		$polltype=($poll['Pselection']=='s')?0:1;
 
 		if($poll['PcloseDate']<date('Y-m-d'))
@@ -58,7 +64,7 @@ class casting
 		
 		$userid = qa_get_logged_in_userid();
 		
-		$nominations=qa_db_read_all_assoc(qa_db_query_sub('SELECT * FROM ^pnomination where pid=# and nomination=$',$pollid,'s'));
+		$nominations=qa_db_read_all_assoc(qa_db_query_sub('SELECT * FROM ^pnomination where pid=# and nomination=$',$pollid,'y'));
 				
 		$castings=qa_db_read_one_assoc(qa_db_query_sub('SELECT * FROM ^pcasting where pid=$ and uid=$',$pollid,$userid),true);
 		$n=(($castings==Null)?0:1);
@@ -75,8 +81,8 @@ class casting
 					qa_db_query_sub('INSERT INTO ^pcasting(pid, uid, nid, points) VALUES (#, #, $, $)',$pollid,$userid, (int)$id, $points);
 				}
 			}			
-			else
-				qa_db_query_sub('UPDATE ^pnomination SET nomination=$ where pid = # and uid =#',$participation, $pollid,$userid);
+			/* else
+				qa_db_query_sub('UPDATE ^pnomination SET nomination=$ where pid = # and uid =#',$participation, $pollid,$userid); */
 
 			$saved = true;
 		}
@@ -84,7 +90,7 @@ class casting
 		$pollnomination=$poll['Nomination'];
 		if($pollnomination=='y'){
 			foreach ($nominations as $nomination) {
-				$options[$nomination['uid']] = $nomination['uname']." (userid: ".qa_userid_to_handle($nomination['uid']).")";
+				$options[$nomination['nid']] = $nomination['uname']." (userid: ".qa_userid_to_handle($nomination['nid']).")";
 			}
 		}
 		else{

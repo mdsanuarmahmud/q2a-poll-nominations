@@ -50,12 +50,15 @@ class update_poll
 
         if (qa_post_text('update-poll-page-form')) {
             // Collect inputs
+			$updateoption=qa_html(qa_post_text('updateoption'));
 			$heading = qa_html(qa_post_text('heading'));
 			$description = qa_post_text('description');
 			$nomination = qa_post_text('nomination');
 			$nopen = qa_post_text('nopen');
 			$nclose = qa_post_text('nclose');
 			$nminpoints = (int) qa_post_text('nminpoints');
+			$nothers = qa_post_text('Nothers');
+			$notherscount = (int) qa_post_text('Notherscount');		
 			$popen = qa_post_text('popen');
 			$pclose = qa_post_text('pclose');
 			$pminpoints = (int) qa_post_text('pminpoints');
@@ -63,15 +66,28 @@ class update_poll
 			$ppoints = (int) qa_post_text('ppoints');
 			$votesdisplay = qa_post_text('votesdisplay');
 
-            if($nomination=='y'){
-            qa_db_query_sub(
-                'update ^poll set Heading=$, Description=$, Nomination=$, NopenDate=$, NcloseDate=$, NMinPoints=#, PopenDate=$, PcloseDate=$, PMinPoints=#, Pselection=$, Ppoints=#, VotesDisplay=$ where id=#',$heading, $description, $nomination,$nopen, $nclose, $nminpoints,$popen, $pclose, $pminpoints,$pselection, $ppoints, $votesdisplay,$pollid 
-            );
-			
-			if($poll['Nomination']=='n'){
-				qa_db_query_sub(
-					'delete from ^pnomination where pid=#',$pollid);
+			if($updateoption=='d'){
+				qa_db_query_sub('delete from ^poll where id=#',$pollid);
+				qa_db_query_sub('delete from ^pnomination where pid=#',$pollid);
+				qa_db_query_sub('delete from ^pcasting where pid=#',$pollid);
+				echo '<script>alert("Poll deleted successfully!");</script>';
+
 			}
+			else if($updateoption=='v'){
+				qa_db_query_sub('update ^poll set Listing=$ where id=#','y',$pollid);
+			}
+			else if($updateoption=='h'){
+				qa_db_query_sub('update ^poll set Listing=$ where id=#','n',$pollid);
+			}
+            else if($nomination=='y'){
+				qa_db_query_sub(
+					'update ^poll set Heading=$, Description=$, Nomination=$, NopenDate=$, NcloseDate=$, NMinPoints=#, PopenDate=$, PcloseDate=$, PMinPoints=#, Pselection=$, Ppoints=#, VotesDisplay=$, Nothers=$, Notherscount=# where id=#',$heading, $description, $nomination,$nopen, $nclose, $nminpoints,$popen, $pclose, $pminpoints,$pselection, $ppoints, $votesdisplay,$nothers,$notherscount, $pollid 
+				);
+				
+				if($poll['Nomination']=='n'){
+					qa_db_query_sub(
+						'delete from ^pnomination where pid=#',$pollid);
+				}
 			}
 			else
 			{
@@ -117,6 +133,8 @@ class update_poll
 		}
 		
         $fields = [
+			['label' => 'Choose One Action:', 'type' => 'custom','html' => '<label><input type="radio" name="updateoption" value="u" checked> Update</label>
+			<label><input type="radio" name="updateoption" value='.(($poll['Listing']=='n')?'"v" >Show in the Listing':'"h" >Hide from Listing').'</label><label><input type="radio" name="updateoption" value="d">Delete</label>', 'tags' => 'NAME="updateoption"'],
             ['label' => 'Title of the Poll', 'type' => 'text', 'tags' => 'NAME="heading"', 'value'=>$poll['Heading']],
             ['label' => 'Description', 'type' => 'text', 'tags' => 'NAME="description"', 'value'=>$poll['Description']],
             ['label' => 'Allow nomination from Users ?', 'type' => 'custom','html' => '<label><input type="radio" name="nomination" value="y" '.(($poll['Nomination']=='y')?"checked":"").'> Yes</label>
@@ -125,6 +143,9 @@ class update_poll
             ['label' => 'Nomination Close Date', 'type' => 'date', 'tags' => 'NAME="nclose" id="NOC"', 'value' =>$poll['NcloseDate'] ],
 			['label' => 'Options for users (separated by commas)', 'type' => 'text', 'tags' => 'NAME="Noptions" id="Noptions"', 'value'=>$Noptions],
             ['label' => 'Minimum Points for Nominations', 'type' => 'number', 'tags' => 'NAME="nminpoints"', 'value' =>$poll['NMinPoints']],
+			['label' => 'Allow users to nominate other users?', 'type' => 'custom','html' => '<label><input type="radio" name="Nothers" value="y" '.(($poll['Nothers']=='y')?"checked":"").'> Yes</label><label><input type="radio" name="Nothers" value="n" '.(($poll['Nothers']=='n')?"checked":"").'>NO</label>', 'tags' => 'NAME="Nothers"'],
+		    ['label' => 'Maximum other nominations by a user ', 'type' => 'number', 'tags' => 'NAME="Notherscount"',  'value' =>$poll['Notherscount']],
+
             ['label' => 'Polling Open Date', 'type' => 'date', 'tags' => 'NAME="popen"', 'value' =>$poll['PopenDate']],
             ['label' => 'Polling Close Date', 'type' => 'date', 'tags' => 'NAME="pclose"','value' =>$poll['PcloseDate']],
             ['label' => 'Minimum Points for Casting Votes', 'type' => 'number', 'tags' => 'NAME="pminpoints"', 'value' =>$poll['PMinPoints']],
@@ -140,64 +161,102 @@ class update_poll
             'tags' => 'method="post" action="' . qa_path_html('update-poll',["poll" => $poll["id"]]) . '"',
             'fields' => $fields,
             'buttons' => [
-                ['label' => 'Submit', 'tags' => 'name="update-poll-page-form"']
+                ['label' => 'Submit', 'tags' => 'name="update-poll-page-form" onclick="return confirm(\'Are you sure you want to save?\')"']
             ],
         ];
 
         if ($saved) {
-            $content['form']['ok'] = 'Poll Updated successfully!';
+			$content['form']['ok'] = 'Poll Updated successfully!';
+			if($updateoption=='d')
+				qa_redirect('list-polls', ['deleted' => '1']);
         }
    $content['script'][] = '
         <script>
-            document.addEventListener("DOMContentLoaded", function () {
-                const nominationRadios = document.querySelectorAll("input[name=\'nomination\']");
-                const nopField = document.getElementById("NOP");
-                const nocField = document.getElementById("NOC");
-				const optionsField = document.getElementById("Noptions");
+		document.addEventListener("DOMContentLoaded", function () {
 
-            function getRow(field) {
-                let el = field;
-                while (el && el.tagName !== "TR") {
-                    el = el.parentElement;
-                }
-                return el;
-            }
+			function getFieldByName(name) {
+				return document.querySelector(\'[name="\' + name + \'"]\');
+			}
 
-            function showField(field) {
-                const row = getRow(field);
-                if (row) row.style.display = "table-row";
-            }
+			function getRow(field) {
+				let el = field;
+				while (el && el.tagName !== "TR") {
+					el = el.parentElement;
+				}
+				return el;
+			}
 
-            function hideField(field) {
-                const row = getRow(field);
-                if (row) row.style.display = "none";
-            }
+			function showField(field) {
+				const row = getRow(field);
+				if (row) row.style.display = "table-row";
+			}
 
-            function toggleFields() {
-                const selected = document.querySelector("input[name=\'nomination\']:checked");
-                if (!selected) return;
+			function hideField(field) {
+				const row = getRow(field);
+				if (row) row.style.display = "none";
+			}
 
-                if (selected.value === "y") {
-                    showField(nopField);
-                    showField(nocField);
-					hideField(optionsField);
-					//optionsField.value="";
-                } else if (selected.value === "n") {
-                    hideField(nopField);
-					nopField.value=new Date().toISOString().split("T")[0];
-					hideField(nocField);
-					nocField.value=new Date().toISOString().split("T")[0];
-                    showField(optionsField);
-                }
-            }
-                // Initial state
-                toggleFields();
+			function toggleFields(radioName, selectedValue) {
+				const config = fieldMap[radioName]?.[selectedValue];
+				if (!config) return;
 
-                // On change
-                nominationRadios.forEach(radio => {
-                    radio.addEventListener("change", toggleFields);
-                });
-            });
+				// Hide fields
+				(config.hide || []).forEach(name => {
+					const field = getFieldByName(name);
+					if (field) hideField(field);
+				});
+
+				// Show fields
+				(config.show || []).forEach(name => {
+					const field = getFieldByName(name);
+					if (field) showField(field);
+				});
+			}
+
+			// Define field toggle behavior per radio group and value
+			const fieldMap = {
+				nomination: {
+					y: {
+						show: ["nopen", "nclose", "nminpoints","Nothers"],
+						hide: ["Noptions"]
+					},
+					n: {
+						show: ["Noptions"],
+						hide: ["nopen", "nclose", "nminpoints","Nothers"]
+					}
+				},
+				
+				Nothers: {
+					y: {
+						show: ["Notherscount"]
+					},
+					n: {
+						hide: ["Notherscount"]
+					}
+				}
+			};
+
+			// Attach event listeners for all radio groups defined in fieldMap
+			Object.keys(fieldMap).forEach(radioGroupName => {
+				const radios = document.querySelectorAll(\'input[name="\' + radioGroupName + \'"]\');
+				radios.forEach((radio, index) => {
+					radio.addEventListener("change", () => {
+						if (radio.checked) {
+							toggleFields(radioGroupName, radio.value);
+						}
+					});
+				});
+			});
+			
+			// Initial call to toggleFields for each radio group
+			Object.keys(fieldMap).forEach(radioGroupName => {
+				const selected = document.querySelector(\'input[name="\' + radioGroupName + \'"]:checked\');
+				if (selected) {
+					toggleFields(radioGroupName, selected.value);
+				}
+			});
+
+		});
         </script>
     ';
 
