@@ -21,7 +21,8 @@ class casting
 		require_once QA_INCLUDE_DIR . 'db/metas.php';
 		require_once QA_INCLUDE_DIR . 'qa-app-users.php';
 		if (!qa_is_logged_in()) {
-			return qa_redirect('login');
+			$_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
+			qa_redirect('login');
 		}
         $content = qa_content_prepare();		
 		$pollid=qa_get("poll");
@@ -29,6 +30,9 @@ class casting
 		{
 			$content['error'] = "Poll ID missing in the URL. Please <a href='" .qa_path_html("list-polls")."'> click here </a> to know the polls";
             return $content;
+		}
+		if (qa_get('recorded') == '1') {
+			echo '<script>alert("Your vote has been recorded sucessfully!");</script>';
 		}		
 		$userpoints=qa_get_logged_in_points();
 		$poll=qa_db_read_one_assoc(qa_db_query_sub('SELECT * FROM ^poll where id=#',$pollid),true);
@@ -38,25 +42,25 @@ class casting
             return $content;
 		}
 		$allowed_user=((qa_get_logged_in_level()<QA_USER_LEVEL_ADMIN)?0:1);
-		if((!$allowed_user)&& ($poll['Listing']=='n'))
+		if((!$allowed_user)&& ($poll['listing']=='n'))
 		{
 			$content['error'] = "There is no such poll available. Please <a href='" .qa_path_html("list-polls")."'> click here </a> to know the available polls for nomination.";
             return $content;
 		}
-		$polltype=($poll['Pselection']=='s')?0:1;
+		$polltype=($poll['pselection']=='s')?0:1;
 
-		if($poll['PcloseDate']<date('Y-m-d'))
+		if($poll['pclosedate']<date('Y-m-d'))
 		{
 			$content['error'] = "Polling is closed for this poll. Please <a href='" .qa_path_html("list-polls")."'> click here </a> to know the available polls for polling.";
             return $content;			
 		}
-		if(date('Y-m-d')<$poll['PopenDate'])
+		if(date('Y-m-d')<$poll['popendate'])
 		{
 			$content['error'] = "Polling is not open for this poll. Please <a href='" .qa_path_html("list-polls")."'> click here </a> to know the available polls for polling.";
             return $content;			
 		}
 
-		if($userpoints<$poll['PMinPoints'])
+		if($userpoints<$poll['pminpoints'])
 		{
 			$content['error'] = "You are not eligible for casting your vote in this poll. Please <a href='" .qa_path_html("list-polls")."'> click here </a> to know the available polls for polling.";
             return $content;			
@@ -69,25 +73,26 @@ class casting
 		$castings=qa_db_read_one_assoc(qa_db_query_sub('SELECT * FROM ^pcasting where pid=$ and uid=$',$pollid,$userid),true);
 		$n=(($castings==Null)?0:1);
 
-		$content['custom'] = '<div><p>Description of the poll: '.$poll['Description'].'</p><p>Closing Date of Poll: '.$poll['PcloseDate'].'</p><p>Polling type: '.(($polltype==0)?'Single Selection':'Multi Selection (use ctrl)').'</p><p>Casting Status: '.(($n==0)?"Yet to Caste Vote":"Vote Casted").'</p><p>'."Stats of this poll:<a href='" .qa_path_html("poll-stats", ["poll" => $poll["id"]])."'> click here </a> ".'</p></div>';
+		$content['custom'] = '<div><p>Description of the poll: '.$poll['description'].'</p><p>Closing Date of Poll: '.$poll['pclosedate'].'</p><p>Polling type: '.(($polltype==0)?'Single Selection':'Multi Selection (use ctrl)').'</p><p>Casting Status: '.(($n==0)?"Yet to Caste Vote":"Vote Casted").'</p><p>'."Stats of this poll:<a href='" .qa_path_html("poll-stats", ["poll" => $poll["id"]])."'> click here </a> ".'</p></div>';
 		
 		$saved = false;
+		$field_errors = [];
 		if (qa_post_text('polling-page-form')) {
 			// Collect inputs
 			$points = 1;
 			$selected = isset($_POST['nid']) ? $_POST['nid'] : [];	
-			if($n==0){
+			if (empty($selected)) {
+				$field_errors['nid'] = 'Select atleast one from the dropdown box';
+			}
+			else{
 				foreach ($selected as $id) {
 					qa_db_query_sub('INSERT INTO ^pcasting(pid, uid, nid, points) VALUES (#, #, $, $)',$pollid,$userid, (int)$id, $points);
 				}
-			}			
-			/* else
-				qa_db_query_sub('UPDATE ^pnomination SET nomination=$ where pid = # and uid =#',$participation, $pollid,$userid); */
-
-			$saved = true;
+				$saved = true;
+			}
 		}
 		$options = [];
-		$pollnomination=$poll['Nomination'];
+		$pollnomination=$poll['nomination'];
 		if($pollnomination=='y'){
 			foreach ($nominations as $nomination) {
 				$options[$nomination['nid']] = $nomination['uname']." (userid: ".qa_userid_to_handle($nomination['nid']).")";
@@ -104,7 +109,9 @@ class casting
             ['label' => 'I would like to cast my vote to: ', 
 			'type' => 'select',
 			'options' => $options,
-			'tags' => 'name="nid[]" '. (($polltype==0)?'':'multiple size="5"')]
+			'tags' => 'name="nid[]" '. (($polltype==0)?'':'multiple size="5"'),
+			'error' => isset($field_errors['nid']) ? $field_errors['nid'] : null,
+			]
         ];
 
 		if($n<1){
@@ -117,9 +124,10 @@ class casting
 				]];
 		}
         if ($saved) {
-			qa_redirect(qa_request(), ['poll' => $pollid]);
+			//$content['form']['ok'] = 'Your vote has been recorded sucessfully!';
+			qa_redirect(qa_request(), ['poll' => $pollid,'recorded' => '1']);
         } 	
-		$content['title'] = 'Caste your vote in '.$poll['Heading'].' poll';		
+		$content['title'] = 'Caste your vote in "'.$poll['heading'].'" poll';		
         return $content;
     }
 }
