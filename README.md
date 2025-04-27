@@ -25,3 +25,7 @@ Pages in the Plugin:
 5. list-polls - To list the available and completed polls
 6. poll-stats - To show the stats of a poll
 7. Ajax usersearch from the database. This page is useful for nominating other users.
+
+
+Credits:
+@ProThoughts - Ajax usersearch provision has been adapted from https://github.com/ProThoughts/q2apro-ajax-usersearch.git
