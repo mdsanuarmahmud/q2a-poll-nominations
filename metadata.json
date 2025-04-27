@@ -1,9 +1,9 @@
 {
 	"name": "Polling Plugin",
-	"description": "Creation of Polls, Nominations from Users and Voting by users",
+	"description": "Creation of Polls, Nominations from users and Voting by users",
 	"uri": "",
-	"version": "1.O",
-	"date": "2025-04-19",
+	"version": "3.O",
+	"date": "2025-04-26",
 	"author": "Shaik Masthan",
 	"author_uri": "https://github.com/csemasthan/",
 	"license": "GPLv2",

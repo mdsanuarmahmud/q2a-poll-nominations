@@ -5,7 +5,7 @@
 ## Features
 
 - ✅ **Poll Creation**: Admins (or higher-level users) can create polls.
-- 🧾 **User Nominations**: Users can nominate themselves for a poll during the **Nomination Period** (if enabled).
+- 🧾 **User Nominations**: Users can nominate themselves or other users for a poll during the **Nomination Period** (if enabled).
 - 🗳️ **Voting**: All users can vote during the **Polling Period**.
 - 📊 **Poll Stats**: Users can view poll options and nomination stats.
 - 🎯 **Point Restrictions**:
@@ -24,3 +24,8 @@ Pages in the Plugin:
 4. casting - To cast vote in the poll. URL: casting&poll=
 5. list-polls - To list the available and completed polls
 6. poll-stats - To show the stats of a poll
+7. Ajax usersearch from the database. This page is useful for nominating other users.
+
+
+Credits:
+@ProThoughts - Ajax usersearch provision has been adapted from https://github.com/ProThoughts/q2apro-ajax-usersearch.git
