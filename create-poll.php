@@ -197,7 +197,7 @@ class create_poll
 			else{
 				if($nomination=='y'){
 					qa_db_query_sub(
-					'INSERT INTO ^poll(heading, description, nomination, nopendate, nclosedate, nminpoints, nothers, notherscount,nopendate, nclosedate, nminpoints, pselection, ppoints, votesdisplay,listing) VALUES ($, $, $, $, $, #,$,#, $, $, #, $, #, $,$)',$heading, $description, $nomination,$nopen, $nclose, $nminpoints,$nothers, $notherscount,$popen, $pclose, $pminpoints,$pselection, $ppoints, $votesdisplay,'y'
+					'INSERT INTO ^poll(heading, description, nomination, nopendate, nclosedate, nminpoints, nothers, notherscount,popendate, pclosedate, pminpoints, pselection, ppoints, votesdisplay,listing) VALUES ($, $, $, $, $, #,$,#, $, $, #, $, #, $,$)',$heading, $description, $nomination,$nopen, $nclose, $nminpoints,$nothers, $notherscount,$popen, $pclose, $pminpoints,$pselection, $ppoints, $votesdisplay,'y'
 					);
 				}
 				else
