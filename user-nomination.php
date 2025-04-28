@@ -133,7 +133,7 @@ class user_nomination
 				$field_errors['fname'] = 'Name cannot be empty.';
 			}
 			
-			$nominatedusers = qa_html(urldecode(qa_post_text('nominatedusers'))) ? qa_html(urldecode(qa_post_text('nominatedusers'))) : "";
+			$nominatedusers = qa_post_text('nominatedusers') ? qa_post_text('nominatedusers') : "";
 			$nominateduserslist = array_map('trim', explode(',', $nominatedusers));
 			//Remove the spaces
 			$nominateduserslist=array_values(array_filter($nominateduserslist, fn($v) => trim($v) !== ''));
@@ -366,7 +366,7 @@ class user_nomination
 		});
 		function to_add_username(username){
 			const target = document.querySelector(\'[name="nominatedusers"]\');
-			target.value += username + ",";
+			target.value += JSON.parse(username) + ",";
 		}
 
 		function startsearching() {
@@ -417,7 +417,7 @@ class user_nomination
 						response = "No user found";
 					}
 					results.style.display = "block";
-					results.innerHTML = response;
+					results.innerHTML = JSON.parse(response);
 				}
 				document.querySelectorAll(".q2apro_us_progress").forEach(function(el) {
 					el.style.display = "none";

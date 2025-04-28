@@ -19,10 +19,35 @@ class update_poll
     function process_request($request)
     {
 
-		if (!qa_is_logged_in()) {
-			$_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
-			qa_redirect('login');
+		function qa_get_current_relative_url() {
+			$request = qa_request(); // gets the page like 'nomination'
+			$query_params = $_GET;   // all query params, e.g., ['qa' => 'nomination', 'poll' => '1']
+
+			unset($query_params['qa']); // remove 'qa' because it's already in $request
+
+			if (!empty($query_params)) {
+				$query_string = http_build_query($query_params); // Build query string
+			} else {
+				$query_string = null;
+			}
+
+			// Build path according to SEO settings
+			if (qa_opt('seo_urls')) {
+				$relative_url = qa_path($request, $query_string, null, null);
+			} else {
+				$relative_url = 'index.php?qa=' . $request;
+				if (!empty($query_string)) {
+					$relative_url .= '&' . $query_string; // Add parameters like 'poll=1'
+				}
+			}
+
+			return $relative_url;
 		}
+		if (!qa_is_logged_in()) {
+	        $to_url = qa_get_current_relative_url();
+			qa_redirect('login', ['to' => $to_url]);
+		}
+
         $content = qa_content_prepare();		
 		if(qa_get_logged_in_level()<QA_USER_LEVEL_ADMIN)
 		{
