@@ -366,7 +366,7 @@ class user_nomination
 		});
 		function to_add_username(username){
 			const target = document.querySelector(\'[name="nominatedusers"]\');
-			target.value += JSON.parse(username) + ",";
+			target.value += username + ",";
 		}
 
 		function startsearching() {
