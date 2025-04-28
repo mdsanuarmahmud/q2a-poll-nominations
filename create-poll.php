@@ -117,7 +117,7 @@ class create_poll
 			$pselection = qa_post_text('pselection');
 			$ppoints = (int) qa_post_text('ppoints');
 			$votesdisplay = qa_post_text('votesdisplay');
-			$options_to_users = isset($_POST['Noptions']) ? $_POST['Noptions'] : "";
+			$options_to_users = qa_post_text('Noptions') ? qa_post_text('Noptions') : "";
 
 			// --- VALIDATIONS ---
 			if (empty($heading)) {

@@ -28,7 +28,7 @@ class list_polls
     }
 	function process_request($request)
     {
-		
+		date_default_timezone_set('Asia/Kolkata');
 		require_once QA_INCLUDE_DIR . 'db/selects.php';
         require_once QA_INCLUDE_DIR . 'qa-db.php';
 		$content = qa_content_prepare();

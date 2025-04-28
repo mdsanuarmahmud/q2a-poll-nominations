@@ -16,6 +16,7 @@ class casting
     }
 	function process_request($request)
     {
+		date_default_timezone_set('Asia/Kolkata');
 		require_once QA_INCLUDE_DIR . 'db/selects.php';
         require_once QA_INCLUDE_DIR . 'qa-db.php';
 		require_once QA_INCLUDE_DIR . 'db/metas.php';
@@ -80,7 +81,7 @@ class casting
 		if (qa_post_text('polling-page-form')) {
 			// Collect inputs
 			$points = 1;
-			$selected = isset($_POST['nid']) ? $_POST['nid'] : [];	
+			$selected = qa_post_array('nid') ? qa_post_array('nid') : [];	
 			if (empty($selected)) {
 				$field_errors['nid'] = 'Select atleast one from the dropdown box';
 			}

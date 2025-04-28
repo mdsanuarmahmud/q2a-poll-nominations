@@ -22,11 +22,37 @@ class user_nomination
         require_once QA_INCLUDE_DIR . 'qa-db.php';
 		require_once QA_INCLUDE_DIR . 'db/metas.php';
 		require_once QA_INCLUDE_DIR . 'qa-app-users.php';
-		if (!qa_is_logged_in()) {
-			$_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
-			qa_redirect('login');
-		}
 
+	
+
+		function qa_get_current_relative_url() {
+			$request = qa_request(); // gets the page like 'nomination'
+			$query_params = $_GET;   // all query params, e.g., ['qa' => 'nomination', 'poll' => '1']
+
+			unset($query_params['qa']); // remove 'qa' because it's already in $request
+
+			if (!empty($query_params)) {
+				$query_string = http_build_query($query_params); // Build query string
+			} else {
+				$query_string = null;
+			}
+
+			// Build path according to SEO settings
+			if (qa_opt('seo_urls')) {
+				$relative_url = qa_path($request, $query_string, null, null);
+			} else {
+				$relative_url = 'index.php?qa=' . $request;
+				if (!empty($query_string)) {
+					$relative_url .= '&' . $query_string; // Add parameters like 'poll=1'
+				}
+			}
+
+			return $relative_url;
+		}
+		if (!qa_is_logged_in()) {
+	        $to_url = qa_get_current_relative_url();
+			qa_redirect('login', ['to' => $to_url]);
+		}
         $content = qa_content_prepare();		
 		$pollid=(int)qa_get("poll");
 		$userid = qa_get_logged_in_userid();
@@ -99,7 +125,7 @@ class user_nomination
 			$participation = qa_html(qa_post_text('participation'));
 			$uname = trim(qa_html(qa_post_text('fname')));
 			$otheruser= qa_html(qa_post_text('otheruser'));
-			$participation_value = isset($_POST['participation']) ? $_POST['participation'] : ((($nomination_submitted == 0) && ($nominated_by_others == 0)) ? 'y' : 'w');
+			$participation_value = qa_html(qa_post_text('participation')) ? qa_html(qa_post_text('participation')) : ((($nomination_submitted == 0) && ($nominated_by_others == 0)) ? 'y' : 'w');
 
 			$is_default_yes = (($nomination_submitted == 0) && ($nominated_by_others == 0)) ? 'y' : 'w';
 			$is_default_no  = (($nomination_submitted == 0) && ($nominated_by_others == 0)) ? 'n' : 'y';
@@ -107,7 +133,7 @@ class user_nomination
 				$field_errors['fname'] = 'Name cannot be empty.';
 			}
 			
-			$nominatedusers = isset($_POST['nominatedusers']) ? $_POST['nominatedusers'] : "";
+			$nominatedusers = qa_html(urldecode(qa_post_text('nominatedusers'))) ? qa_html(urldecode(qa_post_text('nominatedusers'))) : "";
 			$nominateduserslist = array_map('trim', explode(',', $nominatedusers));
 			//Remove the spaces
 			$nominateduserslist=array_values(array_filter($nominateduserslist, fn($v) => trim($v) !== ''));
@@ -171,7 +197,7 @@ class user_nomination
 		}
 		else
 		{
-			$participation_value = isset($_POST['participation']) ? $_POST['participation'] : ((($nomination_submitted == 0) && ($nominated_by_others == 0)) ? 'y' : 'w');
+			$participation_value = qa_html(qa_post_text('participation')) ? qa_html(qa_post_text('participation')) : ((($nomination_submitted == 0) && ($nominated_by_others == 0)) ? 'y' : 'w');
 
 			$is_default_yes = (($nomination_submitted == 0) && ($nominated_by_others == 0)) ? 'y' : 'w';
 			$is_default_no  = (($nomination_submitted == 0) && ($nominated_by_others == 0)) ? 'n' : 'y';
@@ -209,18 +235,19 @@ class user_nomination
 					'error' => isset($field_errors['otheruser']) ? $field_errors['otheruser'] : null,
 				];
 				
-				$fields[] = [
-					'label' => 'Enter the username(s) you want to nominate (separated by commas)',
-					'type' => 'custom',
-					'html' => '<label><input type="text" name="nominatedusers" value="'.$nominatedusers.'"></label>',
-					'error' => isset($field_errors['nominatedusers']) ? $field_errors['nominatedusers'] : null,
-				];
+
 				$fields[] = [
 					'label' => 'Search users and click to add into the nomination list:',
 					'type' => 'custom',
 					'html' => '<label><input type="text" id="q2apro_usersearch" name="q2apro_usersearch" autofocus></label><div class="q2apro_us_progress"><div>Loading…</div></div>
 						<div id="q2apro_ajaxsearch_results"></div>',
 
+				];
+				$fields[] = [
+					'label' => 'Enter the username(s) you want to nominate (separated by commas)',
+					'type' => 'custom',
+					'html' => '<label><input type="text" name="nominatedusers" value="'.$nominatedusers.'"></label>',
+					'error' => isset($field_errors['nominatedusers']) ? $field_errors['nominatedusers'] : null,
 				];
 			}
 
