@@ -23,36 +23,10 @@ class user_nomination
 		require_once QA_INCLUDE_DIR . 'db/metas.php';
 		require_once QA_INCLUDE_DIR . 'qa-app-users.php';
 
-	
-
-		function qa_get_current_relative_url() {
-			$request = qa_request(); // gets the page like 'nomination'
-			$query_params = $_GET;   // all query params, e.g., ['qa' => 'nomination', 'poll' => '1']
-
-			unset($query_params['qa']); // remove 'qa' because it's already in $request
-
-			if (!empty($query_params)) {
-				$query_string = http_build_query($query_params); // Build query string
-			} else {
-				$query_string = null;
-			}
-
-			// Build path according to SEO settings
-			if (qa_opt('seo_urls')) {
-				$relative_url = qa_path($request, $query_string, null, null);
-			} else {
-				$relative_url = 'index.php?qa=' . $request;
-				if (!empty($query_string)) {
-					$relative_url .= '&' . $query_string; // Add parameters like 'poll=1'
-				}
-			}
-
-			return $relative_url;
-		}
 		if (!qa_is_logged_in()) {
-	        $to_url = qa_get_current_relative_url();
-			qa_redirect('login', ['to' => $to_url]);
-		}
+			qa_redirect('login', ['to' => qa_path(qa_request(), ['poll' => qa_get("poll")])]);
+		}	
+
         $content = qa_content_prepare();		
 		$pollid=(int)qa_get("poll");
 		$userid = qa_get_logged_in_userid();
@@ -133,7 +107,7 @@ class user_nomination
 				$field_errors['fname'] = 'Name cannot be empty.';
 			}
 			
-			$nominatedusers = qa_html(urldecode(qa_post_text('nominatedusers'))) ? qa_html(urldecode(qa_post_text('nominatedusers'))) : "";
+			$nominatedusers = qa_post_text('nominatedusers') ? qa_post_text('nominatedusers') : "";
 			$nominateduserslist = array_map('trim', explode(',', $nominatedusers));
 			//Remove the spaces
 			$nominateduserslist=array_values(array_filter($nominateduserslist, fn($v) => trim($v) !== ''));
@@ -417,7 +391,7 @@ class user_nomination
 						response = "No user found";
 					}
 					results.style.display = "block";
-					results.innerHTML = response;
+					results.innerHTML = JSON.parse(response);
 				}
 				document.querySelectorAll(".q2apro_us_progress").forEach(function(el) {
 					el.style.display = "none";

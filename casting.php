@@ -21,9 +21,9 @@ class casting
         require_once QA_INCLUDE_DIR . 'qa-db.php';
 		require_once QA_INCLUDE_DIR . 'db/metas.php';
 		require_once QA_INCLUDE_DIR . 'qa-app-users.php';
+		
 		if (!qa_is_logged_in()) {
-			$_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
-			qa_redirect('login');
+			qa_redirect('login', ['to' => qa_path(qa_request(), ['poll' => qa_get("poll")])]);
 		}
         $content = qa_content_prepare();		
 		$pollid=qa_get("poll");
@@ -66,9 +66,15 @@ class casting
 			$content['error'] = "You are not eligible for casting your vote in this poll. Please <a href='" .qa_path_html("list-polls")."'> click here </a> to know the available polls for polling.";
             return $content;			
 		}
-		
 		$userid = qa_get_logged_in_userid();
-		
+		$user=qa_db_read_one_assoc(qa_db_query_sub('SELECT * FROM ^users where userid=$',$userid),true);
+		$user_created = new DateTime($user['created']);
+		$poll_nomination_start= new DateTime($poll['nopendate']);
+		if($poll_nomination_start <= $user_created)
+		{
+			$content['error'] = "As a new member, you're currently not eligible to cast your vote in this poll. Please <a href='" .qa_path_html("list-polls")."'> click here </a> to know the available polls for polling.";
+            return $content;			
+		}
 		$nominations=qa_db_read_all_assoc(qa_db_query_sub('SELECT * FROM ^pnomination where pid=# and nomination=$',$pollid,'y'));
 				
 		$castings=qa_db_read_one_assoc(qa_db_query_sub('SELECT * FROM ^pcasting where pid=$ and uid=$',$pollid,$userid),true);

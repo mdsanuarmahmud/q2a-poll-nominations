@@ -20,9 +20,9 @@ class update_poll
     {
 
 		if (!qa_is_logged_in()) {
-			$_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
-			qa_redirect('login');
+			qa_redirect('login', ['to' => qa_path(qa_request(), ['poll' => qa_get("poll")])]);
 		}
+		
         $content = qa_content_prepare();		
 		if(qa_get_logged_in_level()<QA_USER_LEVEL_ADMIN)
 		{

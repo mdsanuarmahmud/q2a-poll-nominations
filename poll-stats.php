@@ -22,11 +22,6 @@ class poll_stats
         require_once QA_INCLUDE_DIR . 'qa-db.php';
 		require_once QA_INCLUDE_DIR . 'db/metas.php';
 		require_once QA_INCLUDE_DIR . 'qa-app-users.php';
-/*  		if (!qa_is_logged_in()) {
-			
-			$_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
-			qa_redirect('login');
-		} */
         $content = qa_content_prepare();		
 		$pollid=qa_get("poll");
 		if(!(isset($pollid)))
