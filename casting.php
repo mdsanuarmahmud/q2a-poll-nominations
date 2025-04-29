@@ -21,35 +21,10 @@ class casting
         require_once QA_INCLUDE_DIR . 'qa-db.php';
 		require_once QA_INCLUDE_DIR . 'db/metas.php';
 		require_once QA_INCLUDE_DIR . 'qa-app-users.php';
-		function qa_get_current_relative_url() {
-			$request = qa_request(); // gets the page like 'nomination'
-			$query_params = $_GET;   // all query params, e.g., ['qa' => 'nomination', 'poll' => '1']
-
-			unset($query_params['qa']); // remove 'qa' because it's already in $request
-
-			if (!empty($query_params)) {
-				$query_string = http_build_query($query_params); // Build query string
-			} else {
-				$query_string = null;
-			}
-
-			// Build path according to SEO settings
-			if (qa_opt('seo_urls')) {
-				$relative_url = qa_path($request, $query_string, null, null);
-			} else {
-				$relative_url = 'index.php?qa=' . $request;
-				if (!empty($query_string)) {
-					$relative_url .= '&' . $query_string; // Add parameters like 'poll=1'
-				}
-			}
-
-			return $relative_url;
-		}
+		
 		if (!qa_is_logged_in()) {
-	        $to_url = qa_get_current_relative_url();
-			qa_redirect('login', ['to' => $to_url]);
+			qa_redirect('login', ['to' => qa_path(qa_request(), ['poll' => qa_get("poll")])]);
 		}
-
         $content = qa_content_prepare();		
 		$pollid=qa_get("poll");
 		if(!(isset($pollid)))
@@ -91,9 +66,15 @@ class casting
 			$content['error'] = "You are not eligible for casting your vote in this poll. Please <a href='" .qa_path_html("list-polls")."'> click here </a> to know the available polls for polling.";
             return $content;			
 		}
-		
 		$userid = qa_get_logged_in_userid();
-		
+		$user=qa_db_read_one_assoc(qa_db_query_sub('SELECT * FROM ^users where userid=$',$userid),true);
+		$user_created = new DateTime($user['created']);
+		$poll_nomination_start= new DateTime($poll['nopendate']);
+		if($poll_nomination_start <= $user_created)
+		{
+			$content['error'] = "As a new member, you're currently not eligible to cast your vote in this poll. Please <a href='" .qa_path_html("list-polls")."'> click here </a> to know the available polls for polling.";
+            return $content;			
+		}
 		$nominations=qa_db_read_all_assoc(qa_db_query_sub('SELECT * FROM ^pnomination where pid=# and nomination=$',$pollid,'y'));
 				
 		$castings=qa_db_read_one_assoc(qa_db_query_sub('SELECT * FROM ^pcasting where pid=$ and uid=$',$pollid,$userid),true);
