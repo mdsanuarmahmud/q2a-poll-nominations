@@ -21,7 +21,6 @@ class casting
         require_once QA_INCLUDE_DIR . 'qa-db.php';
 		require_once QA_INCLUDE_DIR . 'db/metas.php';
 		require_once QA_INCLUDE_DIR . 'qa-app-users.php';
-		
 		if (!qa_is_logged_in()) {
 			qa_redirect('login', ['to' => qa_path(qa_request(), ['poll' => qa_get("poll")])]);
 		}

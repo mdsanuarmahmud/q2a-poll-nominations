@@ -17,18 +17,6 @@
 			$this->urltoroot = $urltoroot;
 		}
 		
-		// for display in admin interface under admin/pages
-		function suggest_requests() 
-		{	
-			return array(
-				array(
-					'title' => 'Ajax Usersearch Page', // title of page
-					'request' => 'usersearch', // request name
-					'nav' => null, // 'M'=main, 'F'=footer, 'B'=before main, 'O'=opposite main, null=none
-				),
-			);
-		}
-		
 		// for url query
 		function match_request($request)
 		{
@@ -42,7 +30,7 @@
 		{
 		
 			// we received post data, it is the ajax call with the username
-			$transferString = qa_post_text('ajaxw');
+			$transferString = qa_post_text('ajax');
 			if($transferString !== null) {
 				
 				// this is echoed via ajax success data
@@ -52,42 +40,28 @@
 				
 				// ajax return all user events
 				$potentials = qa_db_read_all_assoc(
-					qa_db_query_sub(
-						'SELECT userid FROM ^users 
-						 WHERE `handle` LIKE #
-						 LIMIT #',
-						'%'.$username.'%',
-						10
-					)
-				);
+					qa_db_query_sub('SELECT userid FROM ^users WHERE handle LIKE # LIMIT #', '%'.$username.'%',10));
 
 				foreach($potentials as $user) {
 					if(isset($user['userid'])) {
 						// get userdata
-						$userdata = qa_db_read_one_assoc(qa_db_query_sub('SELECT handle,avatarblobid FROM ^users 
-																		WHERE userid = #', 
-																		$user['userid']));
-						$imgsize = 100;
+						$userdata = qa_db_read_one_assoc(qa_db_query_sub('SELECT handle,avatarblobid FROM ^users WHERE userid = #', $user['userid']));
+						$imgsize = qa_opt('q2apro_ajax_usersearch_imgsize');
 						if(isset($userdata['avatarblobid'])) {
 							$avatar = './?qa=image&qa_blobid='.$userdata['avatarblobid'].'&qa_size='.$imgsize;
 						}
 						else {
-							$avatar = "";
+							$avatar = './?qa=image&qa_blobid='.qa_opt('avatar_default_blobid').'&qa_size='.$imgsize;
 						}
+						$userprofilelink = qa_path_html('user/'.$userdata['handle']);
 						$handledisplay = qa_html($userdata['handle']);
+						
 						// user item
-						// Escape for JavaScript and HTML separately
-						$escapedForJS = htmlspecialchars(json_encode($handledisplay), ENT_QUOTES, 'UTF-8'); // safe inside HTML attribute
-						$escapedForHTML = htmlspecialchars($handledisplay, ENT_QUOTES, 'UTF-8'); // safe for visible display
-
 						$output .= '<div class="q2apro_usersearch_resultfield">
-							
-								<img src="'.$avatar.'" alt="'.$escapedForHTML.'" onclick="to_add_username('.$escapedForJS.')" >
-							
+							<img src="'.$avatar.'" alt="'.$handledisplay.'" onclick="to_add_username(' . qa_js($userdata['handle']) . ')">
 							<br />
-							<p class="q2apro_us_link" onclick="to_add_username('.$escapedForJS.')">'.$escapedForHTML.'</p>
-						</div>';
-
+							<p class="q2apro_us_link" onclick="to_add_username(' . qa_js($userdata['handle']) . ')">'.$handledisplay.'</span></p>
+							</div>';
 					} // end isset userid
 				} // end foreach
 			
