@@ -1,11 +1,4 @@
 <?php
-
-/*
-	Plugin Name: q2apro-ajax-usersearch
-	Plugin URI: http://www.q2apro.com/plugins/usersearch
-*/
-
-
 	class usersearch {
 		
 		var $directory;
@@ -46,12 +39,12 @@
 					if(isset($user['userid'])) {
 						// get userdata
 						$userdata = qa_db_read_one_assoc(qa_db_query_sub('SELECT handle,avatarblobid FROM ^users WHERE userid = #', $user['userid']));
-						$imgsize = qa_opt('q2apro_ajax_usersearch_imgsize');
+						$imgsize = 100;
 						if(isset($userdata['avatarblobid'])) {
 							$avatar = './?qa=image&qa_blobid='.$userdata['avatarblobid'].'&qa_size='.$imgsize;
 						}
 						else {
-							$avatar = './?qa=image&qa_blobid='.qa_opt('avatar_default_blobid').'&qa_size='.$imgsize;
+							$avatar = "";
 						}
 						$userprofilelink = qa_path_html('user/'.$userdata['handle']);
 						$handledisplay = qa_html($userdata['handle']);

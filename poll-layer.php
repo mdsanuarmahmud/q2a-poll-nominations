@@ -1,11 +1,5 @@
 <?php
 
-/*
-	Plugin Name: q2apro-ajax-usersearch
-	Plugin URI: http://www.q2apro.com/plugins/usersearch
-*/
-
-
 	class qa_html_theme_layer extends qa_html_theme_base {
 		
 		function head_script() {
