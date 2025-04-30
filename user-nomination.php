@@ -210,10 +210,10 @@ class user_nomination
 				];
 				
 
-				$fields[] = [
+ 				$fields[] = [
 					'label' => 'Search users and click to add into the nomination list:',
 					'type' => 'custom',
-					'html' => '<label><input type="text" id="q2apro_usersearch" name="q2apro_usersearch" autofocus></label><div class="q2apro_us_progress"><div>Loading…</div></div>
+					'html' => '<label><input type="text" placeholder="search for usernames" id="q2apro_usersearch" name="q2apro_usersearch" autofocus></label><div class="q2apro_us_progress"><div>Loading…</div></div>
 						<div id="q2apro_ajaxsearch_results"></div>',
 
 				];
@@ -245,8 +245,6 @@ class user_nomination
         }
 				 
 		$content['title'] = 'Nomination page for '.$poll['heading'].' poll';
-		$plugin_url = qa_path_to_root() . 'qa-plugin/' . basename(dirname(__FILE__)) . '/';
-		$content['head_lines'][] = '<link rel="stylesheet" href="'.$plugin_url.'style/usersearch.css">';
 		$content['script'][] = '
         <script>
 		document.addEventListener("DOMContentLoaded", function () {
@@ -336,72 +334,12 @@ class user_nomination
 					toggleFields(radioGroupName, selected.value);
 				}
 			});
-			startsearching();
 		});
 		function to_add_username(username){
 			const target = document.querySelector(\'[name="nominatedusers"]\');
 			target.value += username + ",";
 		}
-
-		function startsearching() {
-			document.querySelectorAll(".q2apro_us_progress").forEach(function(el) {
-				el.style.display = "none";
-			});
-
-			const userSearchInput = document.getElementById("q2apro_usersearch");
-			if (userSearchInput) {
-				userSearchInput.addEventListener("keyup", function() {
-					const us_username = this.value.trim();
-					if (us_username !== "") {
-						q2apro_ajaxsearch(us_username);
-					} else {
-						const results = document.getElementById("q2apro_ajaxsearch_results");
-						if (results) {
-							results.style.display = "none";
-						}
-					}
-				});
-			}
-		}
-
-		function q2apro_ajaxsearch(us_username) {
-			document.querySelectorAll(".q2apro_us_progress").forEach(function(el) {
-				el.style.display = "block";
-			});
-
-			const xhr = new XMLHttpRequest();
-			xhr.open("POST", "'.qa_path('usersearch').'", true);
-			xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-
-			xhr.onerror = function() {
-				const results = document.getElementById("q2apro_ajaxsearch_results");
-				if (results) {
-					results.innerHTML = "bad bad server...";
-					document.querySelectorAll(".q2apro_us_progress").forEach(function(el) {
-						el.style.display = "none";
-					});
-				}
-			};
-
-			xhr.onload = function() {
-				const results = document.getElementById("q2apro_ajaxsearch_results");
-				if (results) {
-					let response = xhr.responseText;
-					if (response.trim() === "") {
-						response = "No user found";
-					}
-					results.style.display = "block";
-					results.innerHTML = JSON.parse(response);
-				}
-				document.querySelectorAll(".q2apro_us_progress").forEach(function(el) {
-					el.style.display = "none";
-				});
-			};
-
-			xhr.send("ajaxw=" + encodeURIComponent(us_username));
-		}
         </script>';
-
         return $content;
     }
 }

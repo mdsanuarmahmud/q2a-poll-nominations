@@ -10,6 +10,8 @@ qa_register_plugin_module('page','update-poll.php','update_poll','For updating a
 
 qa_register_plugin_module('page','user-nomination.php','user_nomination','User nominating themselves or others');
 
+qa_register_plugin_layer('poll-layer.php', 'Polling plugin Layer');
+
 qa_register_plugin_module('page', 'usersearch.php', 'usersearch', 'Ajax request Usersearch Page');
 
 qa_register_plugin_module('page','casting.php','casting','For casting the vote in the polling');
